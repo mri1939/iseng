@@ -14,15 +14,25 @@ def num2bit(x):
 
 
 def convert2txt(bits):
-    flagAndMask = {0x1b:0x60, 0x1c:0x60,0x1d:0x20,0x1f:0x30}
+    flagAndMask = {0x1b:0x60, 0x1c:0x40,0x1d:0x20,0x1e:0x30}
     mask = 0
+    flag = 0
     txt = ''
     for i in bits:
-        data = hex(int(i,2))
-        if data in flagAndMask:
-            mask = flagAndMask[data]
-        txt+='' #todo
-        pass
+        i = int(i,16)
+        if i in flagAndMask:
+            flag = i
+            mask = flagAndMask[i]
+            continue
+        """
+        if flag == 0x1b or flag == 0x1c:
+            txt+=chr(i^mask)
+        if flag == 0x1d:
+            txt+=chr(i^mask)
+        if flag == 0x1e:
+        """
+        txt+=chr(i|mask)
+    return txt
 
 def get_bits(data):
     """
@@ -57,12 +67,13 @@ def get_bits(data):
                 cur_flag = 0x1e
                 txt += num2bit(flag)
         # convert ke 5-bit terus tambahkan ke txt
-        txt += num2bit(ord(i) & 0x0f)
+        print i
+        txt += num2bit(ord(i) & 0x1f)
     txt += num2bit(0x1f)
     return txt
 
 
-def embed(imagearray, data, seed):
+def embed(imagearray, data):
     """
     Random LSB embedding using PRNG
     :param data : data to be embedded
@@ -70,12 +81,10 @@ def embed(imagearray, data, seed):
     :param seed : seed for the random generator
     :return : imagearray contains embedded data
     """
-    rand.seed(seed)  # random seed initialization
     height, width = imagearray.shape[:2]  # get the size of the image
     layer = 1  # greyscale=1, rgb=3, rgba=4
     arr = np.resize(imagearray, (width*height*layer))  # make the array flat
     bits = get_bits(data)  # get the bits string
-    used = []  # list contains pixels that will have been used
     i = 0
     for bit in bits:
         if bit == '0':
@@ -89,7 +98,6 @@ def embed(imagearray, data, seed):
 
 
 def extract(imagearray):
-    rand.seed(seed)
     height, width = imagearray.shape[:2]
     layer = 1  # greyscale=1, rgb=3, rgba=4
     arr = np.resize(imagearray, (width*height*layer))
@@ -128,4 +136,5 @@ print "The Secret Message is :",secret
 bits = get_bits("mantapmantapbang123123!@#&APASIH")
 # convert the bits string to 8 bit binary format
 char_bits = [hex(int(bits[i:i+5], 2)) for i in xrange(0, len(bits), 5)]
-print char_bits
+print char_bits 
+print convert2txt(char_bits)
